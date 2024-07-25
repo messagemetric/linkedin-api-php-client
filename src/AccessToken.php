@@ -182,7 +182,7 @@ class AccessToken implements \JsonSerializable
     /**
      * Specify data format for json_encode()
      */
-    public function jsonSerialize()
+    public function jsonSerialize(): array
     {
         return [
           'token' => $this->getToken(),

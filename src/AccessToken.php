@@ -1,148 +1,43 @@
 <?php
-/**
- * linkedin-client
- * AccessToken.php
- *
- * PHP Version 5
- *
- * @category Production
- * @package  Default
- * @author   Philipp Tkachev <philipp@zoonman.com>
- * @date     8/17/17 22:55
- * @license  http://www.zoonman.com/projects/linkedin-client/license.txt linkedin-client License
- * @version  GIT: 1.0
- * @link     http://www.zoonman.com/projects/linkedin-client/
- */
 
 namespace LinkedIn;
 
-/**
- * Class AccessToken
- *
- * @package LinkedIn
- */
+use Psr\Http\Message\ResponseInterface;
+
 class AccessToken implements \JsonSerializable
 {
+    public function __construct(
+        public readonly string $token = '',
+        public readonly int $expiresAt = 0,
+    ) {}
 
-    /**
-     * @var string
-     */
-    protected $token;
-
-    /**
-     * When token will expire.
-     *
-     * Please, pay attention that LinkedIn API always returns "expires in" time,
-     * which is amount of seconds before token will expire since now.
-     * If you are going to store token somewhere, you have to keep "expires at"
-     * or two values - "expires in" and "token created".
-     * Using "expires at" approach lets you have efficient queries to find
-     * tokens will soon expire and be proactive with regards to your
-     * B2C communication.
-     *
-     * @var int
-     */
-    protected $expiresAt;
-
-    /**
-     * AccessToken constructor.
-     *
-     * @param string $token
-     * @param int    $expiresAt
-     */
-    public function __construct($token = '', $expiresAt = 0)
-    {
-        $this->setToken($token);
-        $this->setExpiresAt($expiresAt);
-    }
-
-    /**
-     * Get token string
-     *
-     * @return string
-     */
-    public function getToken()
+    public function getToken(): string
     {
         return $this->token;
     }
 
     /**
-     * Set token string
-     *
-     * @param string $token
-     *
-     * @return AccessToken
+     * The number of seconds remaining before the token will expire.
      */
-    public function setToken($token)
-    {
-        $this->token = $token;
-        return $this;
-    }
-
-    /**
-     * The number of seconds remaining, from the time it was requested, before the token will expire.
-     *
-     * @return int seconds
-     */
-    public function getExpiresIn()
+    public function getExpiresIn(): int
     {
         return $this->expiresAt - time();
     }
 
-    /**
-     * Set token expiration time
-     *
-     * @param int $expiresIn amount of seconds before expiration
-     *
-     * @return AccessToken
-     */
-    public function setExpiresIn($expiresIn)
+    public function __toString(): string
     {
-        $this->expiresAt = $expiresIn + time();
-        return $this;
+        return $this->token;
     }
 
-    /**
-     * Dynamically typecast token object into string
-     *
-     * @return string
-     */
-    public function __toString()
-    {
-        return $this->getToken();
-    }
-
-    /**
-     * Get Unix epoch time when token will expire
-     *
-     * @return int
-     */
-    public function getExpiresAt()
+    public function getExpiresAt(): int
     {
         return $this->expiresAt;
     }
 
     /**
-     * Set Unix epoch time when token will expire
-     *
-     * @param int $expiresAt seconds, unix time
-     *
-     * @return AccessToken
+     * Convert API response into AccessToken.
      */
-    public function setExpiresAt($expiresAt)
-    {
-        $this->expiresAt = $expiresAt;
-        return $this;
-    }
-
-    /**
-     * Convert API response into AccessToken
-     *
-     * @param \Psr\Http\Message\ResponseInterface $response
-     *
-     * @return self
-     */
-    public static function fromResponse($response)
+    public static function fromResponse(ResponseInterface $response): static
     {
         return static::fromResponseArray(
             Client::responseToArray($response)
@@ -150,19 +45,12 @@ class AccessToken implements \JsonSerializable
     }
 
     /**
-     * Instantiate access token object
+     * Instantiate access token from response array.
      *
-     * @param $responseArray
-     *
-     * @return \LinkedIn\AccessToken
+     * @throws \InvalidArgumentException
      */
-    public static function fromResponseArray($responseArray)
+    public static function fromResponseArray(array $responseArray): static
     {
-        if (!is_array($responseArray)) {
-            throw new \InvalidArgumentException(
-                'Argument is not array'
-            );
-        }
         if (!isset($responseArray['access_token'])) {
             throw new \InvalidArgumentException(
                 'Access token is not available'
@@ -174,19 +62,16 @@ class AccessToken implements \JsonSerializable
             );
         }
         return new static(
-            $responseArray['access_token'],
-            $responseArray['expires_in'] + time()
+            token: $responseArray['access_token'],
+            expiresAt: $responseArray['expires_in'] + time(),
         );
     }
 
-    /**
-     * Specify data format for json_encode()
-     */
     public function jsonSerialize(): array
     {
         return [
-          'token' => $this->getToken(),
-          'expiresAt' => $this->getExpiresAt(),
+            'token' => $this->token,
+            'expiresAt' => $this->expiresAt,
         ];
     }
 }

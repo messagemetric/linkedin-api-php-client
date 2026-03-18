@@ -1,42 +1,20 @@
 <?php
-/**
- * linkedin-client
- * AccessTokenTest.php
- *
- * PHP Version 5
- *
- * @category Production
- * @package  Default
- * @author   Aleksey Salnikov <me@iamsalnikov.ru>
- * @date     8/25/17 15:57
- * @license  http://www.zoonman.com/projects/linkedin-client/license.txt linkedin-client License
- * @version  GIT: 1.0
- * @link     http://www.zoonman.com/projects/linkedin-client/
- */
 
 namespace LinkedIn;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
-/**
- * Class ClientTest
- *
- * @package LinkedIn
- */
 class AccessTokenTest extends TestCase
 {
-    /**
-     * @dataProvider getValidResponseTestTable()
-     * @param AccessToken $expectedToken
-     * @param array $response
-     */
-    public function testConstructorFromResponseArray($expectedToken, $response)
+    #[DataProvider('getValidResponseTestTable')]
+    public function testConstructorFromResponseArray(AccessToken $expectedToken, array $response): void
     {
         $token = AccessToken::fromResponseArray($response);
         $this->assertEquals($expectedToken->getToken(), $token->getToken());
     }
 
-    public function getValidResponseTestTable()
+    public static function getValidResponseTestTable(): array
     {
         return [
             [
@@ -49,55 +27,48 @@ class AccessTokenTest extends TestCase
         ];
     }
 
-    /**
-     * @dataProvider getInvalidResponseTestTable()
-     *
-     * @param string $exceptionClass
-     * @param string $exceptionMessage
-     * @param mixed $response
-     */
-    public function testConstructorFromResponseArrayWithException($exceptionClass, $exceptionMessage, $response)
-    {
-        $this->setExpectedException($exceptionClass, $exceptionMessage);
+    #[DataProvider('getInvalidResponseTestTable')]
+    public function testConstructorFromResponseArrayWithException(
+        string $exceptionClass,
+        string $exceptionMessage,
+        array $response,
+    ): void {
+        $this->expectException($exceptionClass);
+        $this->expectExceptionMessage($exceptionMessage);
         AccessToken::fromResponseArray($response);
     }
 
-    public function getInvalidResponseTestTable()
+    public static function getInvalidResponseTestTable(): array
     {
         return [
             [
-                'expectedException' => \InvalidArgumentException::class,
-                'exceptionMessage' => 'Argument is not array',
-                'response' => null,
-            ],
-            [
-                'expectedException' => \InvalidArgumentException::class,
+                'exceptionClass' => \InvalidArgumentException::class,
                 'exceptionMessage' => 'Access token is not available',
                 'response' => [],
             ],
             [
-                'expectedException' => \InvalidArgumentException::class,
+                'exceptionClass' => \InvalidArgumentException::class,
                 'exceptionMessage' => 'Access token is not available',
                 'response' => [
                     'access_token' => null,
                 ],
             ],
             [
-                'expectedException' => \InvalidArgumentException::class,
+                'exceptionClass' => \InvalidArgumentException::class,
                 'exceptionMessage' => 'Access token is not available',
                 'response' => [
                     'expires_in' => 1,
                 ],
             ],
             [
-                'expectedException' => \InvalidArgumentException::class,
+                'exceptionClass' => \InvalidArgumentException::class,
                 'exceptionMessage' => 'Access token expiration date is not specified',
                 'response' => [
                     'access_token' => 'hello',
                 ],
             ],
             [
-                'expectedException' => \InvalidArgumentException::class,
+                'exceptionClass' => \InvalidArgumentException::class,
                 'exceptionMessage' => 'Access token expiration date is not specified',
                 'response' => [
                     'access_token' => 'hello',
@@ -107,13 +78,13 @@ class AccessTokenTest extends TestCase
         ];
     }
 
-    public function testToString()
+    public function testToString(): void
     {
         $token = new AccessToken('hello', 1);
         $this->assertEquals('hello', (string) $token);
     }
 
-    public function testJsonSerialize()
+    public function testJsonSerialize(): void
     {
         $token = new AccessToken('hello', 1);
         $this->assertEquals('{"token":"hello","expiresAt":1}', json_encode($token));

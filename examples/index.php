@@ -26,8 +26,9 @@ use LinkedIn\Scope;
 // read this document to learn how to create that file
 // https://github.com/zoonman/linkedin-api-php-client/blob/master/examples/README.md
 //
-$dotenv = new Dotenv\Dotenv(dirname(__DIR__));
-$dotenv->load();
+if (file_exists(dirname(__DIR__) . '/.env')) {
+    Dotenv\Dotenv::createImmutable(dirname(__DIR__))->load();
+}
 
 // we need a session to keep intermediate results
 // you can use your own session persistence management

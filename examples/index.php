@@ -27,7 +27,7 @@ use LinkedIn\Scope;
 // https://github.com/zoonman/linkedin-api-php-client/blob/master/examples/README.md
 //
 if (file_exists(dirname(__DIR__) . '/.env')) {
-    Dotenv\Dotenv::createImmutable(dirname(__DIR__))->load();
+    Dotenv\Dotenv::createUnsafeImmutable(dirname(__DIR__))->load();
 }
 
 // we need a session to keep intermediate results

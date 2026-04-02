@@ -33,14 +33,18 @@ class Exception extends \Exception
         );
     }
 
-    private static function extractErrorDescription(RequestException $exception): ?string
+    protected static function extractErrorDescription(RequestException $exception): ?string
     {
         $response = $exception->getResponse();
         if (!$response) {
             return null;
         }
 
-        $json = Client::responseToArray($response);
+        try {
+            $json = Client::responseToArray($response);
+        } catch (\JsonException) {
+            return null;
+        }
         if (isset($json['error_description'])) {
             return $json['error_description'];
         }

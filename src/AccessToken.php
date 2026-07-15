@@ -6,14 +6,29 @@ use Psr\Http\Message\ResponseInterface;
 
 class AccessToken implements \JsonSerializable
 {
-    public function __construct(
-        public readonly string $token = '',
-        public readonly int $expiresAt = 0,
-    ) {}
+    /**
+     * Default-initialized so subclasses that skip parent::__construct() and
+     * populate state through the setters still have initialized typed properties.
+     */
+    protected string $token = '';
+
+    protected int $expiresAt = 0;
+
+    public function __construct(string $token = '', int $expiresAt = 0)
+    {
+        $this->setToken($token);
+        $this->setExpiresAt($expiresAt);
+    }
 
     public function getToken(): string
     {
         return $this->token;
+    }
+
+    public function setToken(string $token): self
+    {
+        $this->token = $token;
+        return $this;
     }
 
     /**
@@ -24,6 +39,19 @@ class AccessToken implements \JsonSerializable
         return $this->expiresAt - time();
     }
 
+    /**
+     * Set the token expiration from a number of seconds remaining.
+     *
+     * No declared return type: a documented subclass (ReviewWave's
+     * AccessRefreshToken) overrides this without one, and a covariant return
+     * type on the parent would make that override incompatible.
+     */
+    public function setExpiresIn(int $expiresIn)
+    {
+        $this->expiresAt = $expiresIn + time();
+        return $this;
+    }
+
     public function __toString(): string
     {
         return $this->token;
@@ -32,6 +60,12 @@ class AccessToken implements \JsonSerializable
     public function getExpiresAt(): int
     {
         return $this->expiresAt;
+    }
+
+    public function setExpiresAt(int $expiresAt): self
+    {
+        $this->expiresAt = $expiresAt;
+        return $this;
     }
 
     /**

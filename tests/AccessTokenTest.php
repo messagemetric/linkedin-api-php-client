@@ -84,6 +84,37 @@ class AccessTokenTest extends TestCase
         $this->assertEquals('hello', (string) $token);
     }
 
+    public function testSettersAreBackwardCompatible(): void
+    {
+        $token = new AccessToken();
+        $this->assertSame($token, $token->setToken('abc'));
+        $this->assertSame($token, $token->setExpiresAt(1234));
+        $this->assertEquals('abc', $token->getToken());
+        $this->assertEquals(1234, $token->getExpiresAt());
+
+        $token->setExpiresIn(60);
+        $this->assertGreaterThan(0, $token->getExpiresIn());
+    }
+
+    /**
+     * Reproduces the downstream consumer pattern (ReviewWave's AccessRefreshToken):
+     * a subclass that never calls parent::__construct() and initializes state
+     * through the inherited setters. This must not fatal.
+     */
+    public function testSubclassRelyingOnSettersWithoutParentConstructor(): void
+    {
+        $token = new class ('tok', 999) extends AccessToken {
+            public function __construct($token = '', $expiresAt = 0)
+            {
+                $this->setToken($token);
+                $this->setExpiresAt($expiresAt);
+            }
+        };
+
+        $this->assertEquals('tok', $token->getToken());
+        $this->assertEquals(999, $token->getExpiresAt());
+    }
+
     public function testJsonSerialize(): void
     {
         $token = new AccessToken('hello', 1);

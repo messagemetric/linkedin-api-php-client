@@ -1,103 +1,78 @@
 <?php
-/**
- * linkedin-client
- * ClientTest.php
- *
- * PHP Version 5
- *
- * @category Production
- * @package  Default
- * @author   Philipp Tkachev <philipp@zoonman.com>
- * @date     8/17/17 19:57
- * @license  http://www.zoonman.com/projects/linkedin-client/license.txt linkedin-client License
- * @version  GIT: 1.0
- * @link     http://www.zoonman.com/projects/linkedin-client/
- */
 
 namespace LinkedIn;
 
-/**
- * Class ClientTest
- *
- * @package LinkedIn
- */
-class ClientTest extends \PHPUnit_Framework_TestCase
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\TestCase;
+
+class ClientTest extends TestCase
 {
+    public Client $client;
 
-    /**
-     * @var \LinkedIn\Client
-     */
-    public $client;
-
-    /**
-     * Setup test environment
-     */
-    public function setUp()
+    protected function setUp(): void
     {
         $this->client = new Client(
-            getenv('LINKEDIN_CLIENT_ID'),
-            getenv('LINKEDIN_CLIENT_SECRET')
+            getenv('LINKEDIN_CLIENT_ID') ?: '',
+            getenv('LINKEDIN_CLIENT_SECRET') ?: '',
         );
     }
 
-    /**
-     * Make sure, that user redirect gets prepared correctly
-     */
-    public function testGetLoginUrl()
+    public function testGetLoginUrl(): void
     {
         $actual = $this->client->getLoginUrl();
         $this->assertNotEmpty($actual);
     }
 
-    /**
-     * Make sure that method LinkedIn\Client::setAccessToken() works correctly
-     *
-     * @param $token
-     * @param AccessToken|null $expectedToken
-     * @param \Exception|null $expectedException
-     *
-     * @dataProvider getSetAccessTokenTestTable
-     */
-    public function testSetAccessToken($token, $expectedToken, $expectedException)
-    {
+    #[DataProvider('getSetAccessTokenTestTable')]
+    public function testSetAccessToken(
+        AccessToken|string $token,
+        ?AccessToken $expectedToken,
+    ): void {
         $client = new Client();
-
-        if ($expectedException !== null) {
-            $this->setExpectedException(get_class($expectedException), $expectedException->getMessage());
-        }
-
         $client->setAccessToken($token);
 
         if ($expectedToken !== null) {
-            $this->assertEquals($expectedToken->getToken(), $client->getAccessToken()->getToken());
+            $this->assertEquals(
+                $expectedToken->getToken(),
+                $client->getAccessToken()->getToken()
+            );
         }
     }
 
-    public function getSetAccessTokenTestTable()
+    public static function getSetAccessTokenTestTable(): array
     {
         return [
-            [
-                'token' => null,
-                'expectedToken' => null,
-                'expectedException' => new \InvalidArgumentException('$accessToken must be instance of \LinkedIn\AccessToken class'),
-            ],
-
-            [
+            'string token' => [
                 'token' => 'test token',
                 'expectedToken' => new AccessToken('test token'),
-                'expectedException' => null,
             ],
-
-            [
+            'AccessToken object' => [
                 'token' => new AccessToken('hello world'),
                 'expectedToken' => new AccessToken('hello world'),
-                'expectedException' => null,
             ],
+        ];
+    }
 
-            [
+    #[DataProvider('getSetAccessTokenExceptionTestTable')]
+    public function testSetAccessTokenWithException(
+        mixed $token,
+        string $exceptionClass,
+    ): void {
+        $this->expectException($exceptionClass);
+        $client = new Client();
+        $client->setAccessToken($token);
+    }
+
+    public static function getSetAccessTokenExceptionTestTable(): array
+    {
+        return [
+            'null throws TypeError' => [
+                'token' => null,
+                'exceptionClass' => \TypeError::class,
+            ],
+            'object throws TypeError' => [
                 'token' => new \StdClass(),
-                'expectedToken' => null,
-                'expectedException' => new \InvalidArgumentException('$accessToken must be instance of \LinkedIn\AccessToken class'),
+                'exceptionClass' => \TypeError::class,
             ],
         ];
     }
